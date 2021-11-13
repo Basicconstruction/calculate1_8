@@ -12,26 +12,26 @@ import java.util.Random;
 import javax.swing.*;
 
 public class UiCalculate extends JFrame{
-	public static int precision = 2;
-	private JPanel showPanel;
-	private JPanel buttonPanel;
-	private JPanel fourLineGirdPanel;
-	private JPanel twoUnRegularPanel;
-	private int regularPadding = 10;
-	private int oriwidth = 520;
-	private int width = oriwidth+16;
-	private int height = 590;
-	private int showPanelHeight = 200;
-	private int padding = 5;
-	private StringBuilder saString = new StringBuilder();
-	private StringBuilder pcString = new StringBuilder();
-	private boolean lastOperationIsGetResult = false;
-	private JPanel pc;//process
-	private JPanel sa;//temporary and answer
-	private JLabel pcLabel = new JLabel("",JLabel.RIGHT);
-	private JLabel saLabel = new JLabel("",JLabel.RIGHT);
-	private ArrayList<SButton> buttonGroup = new ArrayList<>(32);//>28,预设空间
-	private static String ans = "";
+	public static int precision = 2;//精度设置静态变量
+	private JPanel showPanel;//展示区域总面板
+	private JPanel buttonPanel;// Button按钮的总面板
+	private JPanel fourLineGirdPanel;//Button按钮的前四行，大小一致的按钮的面板。
+	private JPanel twoUnRegularPanel;//Button按钮的后两行，大小不一致的按钮的面板。
+	private int regularPadding = 10;//常用的面板与界面的间距
+	private int oriwidth = 520;//设计application的宽度
+	private int width = oriwidth+16;//修正application宽度
+	private int height = 590;//设计application的高度
+	private int showPanelHeight = 200;//设计展示区域面板的高度
+	private int padding = 5;//按钮之间的间距
+	private StringBuilder saString = new StringBuilder();//临时数字输入，结果展示面板的处理字符串变量
+	private StringBuilder pcString = new StringBuilder();//表达式展示面板的处理字符串变量
+	private boolean lastOperationIsGetResult = false;//状态，用于确定上一次的操作是不是=
+	private JPanel pc;//临时数字输入，结果展示面板
+	private JPanel sa;//临时数字输入，结果展示面板
+	private JLabel pcLabel = new JLabel("",JLabel.RIGHT);///表达式展示面板的展示Label
+	private JLabel saLabel = new JLabel("",JLabel.RIGHT);//临时数字输入，结果展示面板的Label
+	private ArrayList<SButton> buttonGroup = new ArrayList<>(32);//>28,预设空间，存储所有按钮引用的‘数组’
+	private static String ans = "";//存储上一次结果的字符串变量
 	public UiCalculate(){
 		super("计算器");
 		this.setResizable(false);
@@ -56,6 +56,9 @@ public class UiCalculate extends JFrame{
 		this.ListenerRevolver();
 		//debug();
 	}
+	/**
+	 * 为应用程序添加菜单栏
+	 * **/
 	public void setMenu(){
 		JMenuBar menu = new JMenuBar();
 		setJMenuBar(menu);
@@ -110,6 +113,9 @@ public class UiCalculate extends JFrame{
 		});
 
 	}
+	/**
+	 * 为应用程序添加按钮
+	 * **/
 	public void addButtons(){
 		this.fourLineGirdPanel = new JPanel();
 		this.twoUnRegularPanel = new JPanel(null);
@@ -159,14 +165,23 @@ public class UiCalculate extends JFrame{
 		sbt[7].setBounds(revolveWidth(4,baseWidth),0,baseWidth,baseHeight*2+padding);
 
 	}
+	/**
+	 * 用于addButtons()，简化计算偏移位置
+	 * **/
 	private int revolveWidth(int n,int w){
 		return (w+padding)*n;
 	}
+	/**
+	 * 用于处理绝对位置的debug方法
+	 * **/
 	public void debug(){
 		this.showPanel.setBackground(Color.RED);
 		this.buttonPanel.setBackground(Color.BLUE);
 		this.fourLineGirdPanel.setBackground(Color.BLACK);
 	}
+	/**
+	 * 对展示区域面板进行细化操作
+	 * **/
 	private void enrichShowPanel(){
 		this.pc = new JPanel(null);
 		this.sa = new JPanel(null);
@@ -186,6 +201,10 @@ public class UiCalculate extends JFrame{
 //		pcLabel.setText("test");
 //		saLabel.setText("test");
 	}
+	/**
+	 * 为添加的按钮添加监听器，注意这个函数实际上只会调用一次，即添加监听器这个过程
+	 * 不会造成严重的运行开销
+	 * **/
 	private void ListenerRevolver(){
 		String[] nums = new String[]{
 				"0","1","2","3","4","5","6","7","8","9","."
@@ -195,6 +214,7 @@ public class UiCalculate extends JFrame{
 		};
 		for(SButton sbt:this.buttonGroup){
 			if(findFirstOf(sbt.signalLabel,nums)!=-1){
+				// 0 1 2 3 4 5 6 7 8 9 . 按钮，特殊的是 . 也被归于这个按钮。
 				sbt.addActionListener(new ActionListener(){
 					@Override
 					public void actionPerformed(ActionEvent e) {
@@ -209,6 +229,7 @@ public class UiCalculate extends JFrame{
 					}
 				});
 			}else if(findFirstOf(sbt.signalLabel,operators)!=-1){
+				// + - * / 按钮
 				sbt.addActionListener(new ActionListener(){
 					@Override
 					public void actionPerformed(ActionEvent e) {
@@ -225,6 +246,7 @@ public class UiCalculate extends JFrame{
 					}
 				});
 			}else if(sbt.signalLabel.equals("=")){
+				// = 按钮，用于计算结果。会先将saLabel上的值汇集到pcLabel上
         		sbt.addActionListener(new ActionListener() {
               	@Override
 			  	public void actionPerformed(ActionEvent e) {
@@ -239,6 +261,7 @@ public class UiCalculate extends JFrame{
               	}
         		});
 			}else if(sbt.signalLabel.equals("1/x")){
+				// 直接计算当前 saLabel上的saString代表的值的倒数，并作为新的saString
 				sbt.addActionListener(new ActionListener(){
 					@Override
 					public void actionPerformed(ActionEvent e) {
@@ -261,6 +284,7 @@ public class UiCalculate extends JFrame{
 					}
 				});
 			}else if(sbt.signalLabel.equals("CA")){
+				// as clear all,清空按钮，不会清空ans，当然也可以设置为清空ans
 				sbt.addActionListener(e -> {
 					saString = new StringBuilder();
 					pcString = new StringBuilder();
@@ -269,6 +293,7 @@ public class UiCalculate extends JFrame{
 					lastOperationIsGetResult = false;
 				});
 			}else if(sbt.signalLabel.equals("ans")){
+				//   ans 按钮
 				sbt.addActionListener(e -> {
 					if(lastOperationIsGetResult){
 						pcString = new StringBuilder("ans");
@@ -282,6 +307,7 @@ public class UiCalculate extends JFrame{
 					lastOperationIsGetResult = false;
 				});
 			}else if(sbt.signalLabel.equals("(")||sbt.signalLabel.equals(")")){
+				//     (  和  )   按钮
 				sbt.addActionListener(e -> {
 					if(saString.toString().length()!=0){
 						if(sbt.signalLabel.equals("(")){
@@ -298,9 +324,14 @@ public class UiCalculate extends JFrame{
 					pcSync();
 				});
 			}else if(sbt.signalLabel.equals("BACK")){
+				//回退按钮
 				sbt.addActionListener(e->{
 					if(!saString.isEmpty()){
 						saPop();
+						if(lastOperationIsGetResult){
+							pcString = new StringBuilder();
+							pcSync();
+						}
 					}else{
 						if(!pcString.isEmpty()){
 							pcPop();
@@ -309,6 +340,7 @@ public class UiCalculate extends JFrame{
 					lastOperationIsGetResult = false;
 				});
 			}else{
+				//未定义的按钮
 				sbt.addActionListener(e->{
 					JDialog dialog = new JDialog(UiCalculate.this);
 					dialog.setTitle("surprise!");
@@ -331,12 +363,21 @@ public class UiCalculate extends JFrame{
 
 		}
 	}
+	/**
+	 * 用于根据pcString更新pcLabel的text
+	 * **/
 	private void pcSync(){
 		pcLabel.setText(pcString.toString());
 	}
+	/**
+	 * 用于根据saString更新saLabel的text
+	 * **/
 	private void saSync(){
 		saLabel.setText(saString.toString());
 	}
+	/**
+	 * 未经优化的查找算法，从 String[] strs 查找 String s,如果存在，返回索引值，否则，返回-1
+	 * **/
 	private int findFirstOf(String s,String[] strs){
 		int index = -1;
 		for(int i = 0;i < strs.length;i++){
@@ -346,6 +387,9 @@ public class UiCalculate extends JFrame{
 		}
 		return index;
 	}
+	/**
+	 * 用于为BACK按钮添加回退方法，这是其中的一个依赖函数
+	 * **/
 	private void pcPop(){
 		StringBuilder numberString = new StringBuilder();
 		Character c;
@@ -360,12 +404,18 @@ public class UiCalculate extends JFrame{
 		saSync();
     	pcSync();
 	}
+	/**
+	 * 用于为BACK按钮添加回退方法，这是其中的一个依赖函数
+	 * **/
 	private void saPop(){
 		if(!saString.isEmpty()){
 			popOneChar(saString);
 			saSync();
 		}
 	}
+	/**
+	 * 用于为BACK按钮添加回退方法，这是 pcPop()和saPop()的依赖函数。
+	 * **/
 	private Character popOneChar(StringBuilder sbr){
 		//不可扩展的背后pop
 		int len = sbr.length();
