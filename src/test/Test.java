@@ -42,6 +42,17 @@ public class Test {
 }
 class Test2{
     public static void main(String[] args){
-        System.out.println(Integer.parseInt("-100"));
+//        System.out.println(Integer.parseInt("-100"));
+        StringBuilder sb = new StringBuilder("hello world");
+        char c = popOneChar(sb);
+        System.out.println(c+"\n"+sb);
+    }
+    private static char popOneChar(StringBuilder sbr){
+        //不可扩展的背后pop
+        int len = sbr.length();
+
+        char c = sbr.toString().charAt(len-1);
+        sbr.delete(len-1,len);
+        return c;
     }
 }

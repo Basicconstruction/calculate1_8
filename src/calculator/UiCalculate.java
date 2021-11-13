@@ -31,6 +31,7 @@ public class UiCalculate extends JFrame{
 	private JLabel pcLabel = new JLabel("",JLabel.RIGHT);
 	private JLabel saLabel = new JLabel("",JLabel.RIGHT);
 	private ArrayList<SButton> buttonGroup = new ArrayList<>(32);//>28,预设空间
+	private static String ans = "";
 	public UiCalculate(){
 		super("计算器");
 		this.setResizable(false);
@@ -123,7 +124,7 @@ public class UiCalculate extends JFrame{
 //				"4","5","6","*","1/x"
 //				};
 		String[] buttonModel = new String[]{"MC","MR","MS","CA","BACK",
-				"<-","(",")","abs","sqrt",
+				"<-","(",")","ans","sqrt",
 				"7","8","9","/","%",
 				"4","5","6","*","1/x"
 		};
@@ -203,7 +204,7 @@ public class UiCalculate extends JFrame{
 							saString = new StringBuilder();
 						}
 						saString.append(sbt.signalLabel);
-						saLabel.setText(saString.toString());
+						saSync();
 						lastOperationIsGetResult = false;
 					}
 				});
@@ -213,12 +214,12 @@ public class UiCalculate extends JFrame{
 					public void actionPerformed(ActionEvent e) {
 						if(lastOperationIsGetResult){
 							pcString = new StringBuilder();
-							pcLabel.setText(pcString.toString());
+							pcSync();
 
 						}
 						saLabel.setText("");
 						pcString.append(saString).append(sbt.signalLabel);
-						pcLabel.setText(pcString.toString());
+						pcSync();
 						saString = new StringBuilder();
 						lastOperationIsGetResult = false;
 					}
@@ -228,12 +229,13 @@ public class UiCalculate extends JFrame{
               	@Override
 			  	public void actionPerformed(ActionEvent e) {
               		pcString.append(saString.toString());
-                  	DoubleParser parser = new DoubleParser(pcString.toString());
+                  	DoubleParser parser = new DoubleParser(UiUtils.ansSerialize(pcString.toString(),ans));
                   	saString = new StringBuilder(""+DoublePrecision.round(parser.getDoubleResult(),precision));
-                  	saLabel.setText(saString.toString());
+                  	saSync();
                   	pcString.append("=");
-					pcLabel.setText(pcString.toString());
+					pcSync();
 					lastOperationIsGetResult = true;
+					ans = saString.toString();
               	}
         		});
 			}else if(sbt.signalLabel.equals("1/x")){
@@ -242,7 +244,7 @@ public class UiCalculate extends JFrame{
 					public void actionPerformed(ActionEvent e) {
 						if(lastOperationIsGetResult){
 							pcString = new StringBuilder();
-							pcLabel.setText(pcString.toString());
+							pcSync();
 
 						}
 						if(saString.toString().contains(".")){
@@ -254,7 +256,7 @@ public class UiCalculate extends JFrame{
 							double tp = 1.0/t;
 							saString = new StringBuilder(""+tp);
 						}
-						saLabel.setText(saString.toString());
+						saSync();
 						lastOperationIsGetResult = false;
 					}
 				});
@@ -264,6 +266,19 @@ public class UiCalculate extends JFrame{
 					pcString = new StringBuilder();
 					saLabel.setText("");
 					pcLabel.setText("");
+					lastOperationIsGetResult = false;
+				});
+			}else if(sbt.signalLabel.equals("ans")){
+				sbt.addActionListener(e -> {
+					if(lastOperationIsGetResult){
+						pcString = new StringBuilder("ans");
+						saString = new StringBuilder();
+					}else{
+						pcString.append("ans");
+						pcSync();
+					}
+					pcSync();
+					saSync();
 					lastOperationIsGetResult = false;
 				});
 			}else if(sbt.signalLabel.equals("(")||sbt.signalLabel.equals(")")){
@@ -279,7 +294,19 @@ public class UiCalculate extends JFrame{
 					}else{
 						pcString.append(sbt.signalLabel);
 					}
+					lastOperationIsGetResult = false;
 					pcSync();
+				});
+			}else if(sbt.signalLabel.equals("BACK")){
+				sbt.addActionListener(e->{
+					if(!saString.isEmpty()){
+						saPop();
+					}else{
+						if(!pcString.isEmpty()){
+							pcPop();
+						}
+					}
+					lastOperationIsGetResult = false;
 				});
 			}else{
 				sbt.addActionListener(e->{
@@ -298,6 +325,7 @@ public class UiCalculate extends JFrame{
 					cook.setOpaque(true);
 					cook.setBackground(color);
 					dialog.setVisible(true);
+					lastOperationIsGetResult = false;
 				});
 			}
 
@@ -317,6 +345,38 @@ public class UiCalculate extends JFrame{
 			}
 		}
 		return index;
+	}
+	private void pcPop(){
+		StringBuilder numberString = new StringBuilder();
+		Character c;
+		while((c=popOneChar(pcString))!=null&&UiUtils.isDigitChar(c)){
+			numberString.insert(0,c);
+		}
+    	if (numberString.isEmpty()){
+			saString = new StringBuilder();
+		}else{
+    		saString = new StringBuilder().append(numberString);
+		}
+		saSync();
+    	pcSync();
+	}
+	private void saPop(){
+		if(!saString.isEmpty()){
+			popOneChar(saString);
+			saSync();
+		}
+	}
+	private Character popOneChar(StringBuilder sbr){
+		//不可扩展的背后pop
+		int len = sbr.length();
+		Character c;
+		if(len!=0){
+			c = sbr.toString().charAt(len-1);
+			sbr.delete(len-1,len);
+		}else{
+			c = null;
+		}
+		return c;
 	}
 
 
