@@ -300,7 +300,6 @@ public class UiCalculate extends JFrame{
 						saString = new StringBuilder();
 					}else{
 						pcString.append("ans");
-						pcSync();
 					}
 					pcSync();
 					saSync();
@@ -309,19 +308,26 @@ public class UiCalculate extends JFrame{
 			}else if(sbt.signalLabel.equals("(")||sbt.signalLabel.equals(")")){
 				//     (  和  )   按钮
 				sbt.addActionListener(e -> {
-					if(saString.toString().length()!=0){
-						if(sbt.signalLabel.equals("(")){
-							pcString.append(saString).append("*").append(sbt.signalLabel);
-						}else{
-							pcString.append(saString).append(sbt.signalLabel);
-						}
+					if(lastOperationIsGetResult){
+						pcString = new StringBuilder(sbt.signalLabel);
 						saString = new StringBuilder();
 						saSync();
+						pcSync();
 					}else{
-						pcString.append(sbt.signalLabel);
+						if(saString.toString().length()!=0){
+							if(sbt.signalLabel.equals("(")){
+								pcString.append(saString).append("*").append(sbt.signalLabel);
+							}else{
+								pcString.append(saString).append(sbt.signalLabel);
+							}
+							saString = new StringBuilder();
+							saSync();
+						}else{
+							pcString.append(sbt.signalLabel);
+						}
+						pcSync();
 					}
 					lastOperationIsGetResult = false;
-					pcSync();
 				});
 			}else if(sbt.signalLabel.equals("BACK")){
 				//回退按钮
