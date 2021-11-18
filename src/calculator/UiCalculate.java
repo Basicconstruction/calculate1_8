@@ -218,14 +218,11 @@ public class UiCalculate extends JFrame{
 				sbt.addActionListener(new ActionListener(){
 					@Override
 					public void actionPerformed(ActionEvent e) {
-						if(lastOperationIsGetResult){
-							pcString = new StringBuilder();
-							pcLabel.setText("");
-							saString = new StringBuilder();
-						}
+						standardEraseAfterEqual();
 						saString.append(sbt.signalLabel);
 						saSync();
-						lastOperationIsGetResult = false;
+						pcSync();
+						standardStatusChange(sbt);
 					}
 				});
 			}else if(findFirstOf(sbt.signalLabel,operators)!=-1){
@@ -235,14 +232,15 @@ public class UiCalculate extends JFrame{
 					public void actionPerformed(ActionEvent e) {
 						if(lastOperationIsGetResult){
 							pcString = new StringBuilder();
-							pcSync();
-
+							pcString.append(saString).append(sbt.signalLabel);
+							saString = new StringBuilder();
+						}else{
+							pcString.append(saString).append(sbt.signalLabel);
+							saString = new StringBuilder();
 						}
-						saLabel.setText("");
-						pcString.append(saString).append(sbt.signalLabel);
+						saSync();
 						pcSync();
-						saString = new StringBuilder();
-						lastOperationIsGetResult = false;
+						standardStatusChange(sbt);
 					}
 				});
 			}else if(sbt.signalLabel.equals("=")){
@@ -253,11 +251,11 @@ public class UiCalculate extends JFrame{
               		pcString.append(saString.toString());
                   	DoubleParser parser = new DoubleParser(UiUtils.ansSerialize(pcString.toString(),ans));
                   	saString = new StringBuilder(""+DoublePrecision.round(parser.getDoubleResult(),precision));
-                  	saSync();
-                  	pcString.append("=");
-					pcSync();
-					lastOperationIsGetResult = true;
 					ans = saString.toString();
+                  	pcString.append("=");
+					saSync();
+					pcSync();
+					standardStatusChange(sbt);
               	}
         		});
 			}else if(sbt.signalLabel.equals("1/x")){
@@ -265,11 +263,6 @@ public class UiCalculate extends JFrame{
 				sbt.addActionListener(new ActionListener(){
 					@Override
 					public void actionPerformed(ActionEvent e) {
-						if(lastOperationIsGetResult){
-							pcString = new StringBuilder();
-							pcSync();
-
-						}
 						if(saString.toString().contains(".")){
 							double t = Double.parseDouble(saString.toString());
 							t = 1/t;
@@ -279,40 +272,35 @@ public class UiCalculate extends JFrame{
 							double tp = 1.0/t;
 							saString = new StringBuilder(""+tp);
 						}
+						pcString = new StringBuilder();
+						pcSync();
 						saSync();
-						lastOperationIsGetResult = false;
+						standardStatusChange(sbt);
 					}
 				});
 			}else if(sbt.signalLabel.equals("CA")){
 				// as clear all,清空按钮，不会清空ans，当然也可以设置为清空ans
 				sbt.addActionListener(e -> {
-					saString = new StringBuilder();
-					pcString = new StringBuilder();
-					saLabel.setText("");
-					pcLabel.setText("");
-					lastOperationIsGetResult = false;
+					clearAll();
+					saSync();
+					pcSync();
+					standardStatusChange(sbt);
 				});
 			}else if(sbt.signalLabel.equals("ans")){
 				//   ans 按钮
 				sbt.addActionListener(e -> {
-					if(lastOperationIsGetResult){
-						pcString = new StringBuilder("ans");
-						saString = new StringBuilder();
-					}else{
-						pcString.append("ans");
-					}
+					standardEraseAfterEqual();
+					pcString.append("ans");
 					pcSync();
 					saSync();
-					lastOperationIsGetResult = false;
+					standardStatusChange(sbt);
 				});
 			}else if(sbt.signalLabel.equals("(")||sbt.signalLabel.equals(")")){
 				//     (  和  )   按钮
 				sbt.addActionListener(e -> {
 					if(lastOperationIsGetResult){
-						pcString = new StringBuilder(sbt.signalLabel);
-						saString = new StringBuilder();
-						saSync();
-						pcSync();
+						clearAll();
+						pcString.append(sbt.signalLabel);
 					}else{
 						if(saString.toString().length()!=0){
 							if(sbt.signalLabel.equals("(")){
@@ -321,13 +309,13 @@ public class UiCalculate extends JFrame{
 								pcString.append(saString).append(sbt.signalLabel);
 							}
 							saString = new StringBuilder();
-							saSync();
 						}else{
 							pcString.append(sbt.signalLabel);
 						}
-						pcSync();
 					}
-					lastOperationIsGetResult = false;
+					saSync();
+					pcSync();
+					standardStatusChange(sbt);
 				});
 			}else if(sbt.signalLabel.equals("BACK")){
 				//回退按钮
@@ -343,7 +331,7 @@ public class UiCalculate extends JFrame{
 							pcPop();
 						}
 					}
-					lastOperationIsGetResult = false;
+					standardStatusChange(sbt);
 				});
 			}else{
 				//未定义的按钮
@@ -363,11 +351,30 @@ public class UiCalculate extends JFrame{
 					cook.setOpaque(true);
 					cook.setBackground(color);
 					dialog.setVisible(true);
-					lastOperationIsGetResult = false;
+					standardStatusChange(sbt);
 				});
 			}
 
 		}
+	}
+	/**
+	 * 通用的状态转变改变函数
+	 * **/
+	private void standardStatusChange(SButton sbt){
+		lastOperationIsGetResult = sbt.signalLabel.equals("=");
+	}
+	/**
+	 * 自动的根据状态初始化字符串持有对象。
+	 * **/
+	private void standardEraseAfterEqual(){
+		if(lastOperationIsGetResult){
+			pcString = new StringBuilder();
+			saString = new StringBuilder();
+		}
+	}
+	private void clearAll(){
+		pcString = new StringBuilder();
+		saString = new StringBuilder();
 	}
 	/**
 	 * 用于根据pcString更新pcLabel的text
